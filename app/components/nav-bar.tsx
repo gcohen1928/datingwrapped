@@ -44,7 +44,7 @@ export default function NavBar() {
   }
 
   const navItems = [
-    { href: '/your-dates', label: 'Your Dates', icon: <FaHeart className="mr-2" /> },
+    { href: '/dashboard', label: 'Data Entry', icon: <FaHeart className="mr-2" /> },
     { href: '/stats', label: 'Stats', icon: <FaChartBar className="mr-2" /> },
     { href: '/wrapped', label: 'Wrapped', icon: <FaFilm className="mr-2" /> },
     { href: '/settings', label: 'Settings', icon: <FaCog className="mr-2" /> },
@@ -85,7 +85,7 @@ export default function NavBar() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Logo href="/your-dates" />
+              <Logo href="/dashboard" />
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               {navItems.map((item) => (

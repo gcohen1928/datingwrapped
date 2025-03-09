@@ -29,9 +29,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${poppins.variable} ${inter.variable}`}>
-      <body className="min-h-screen bg-gradient-to-br from-brand-pink-100 via-white to-brand-mint-100 font-inter">
+      <body className="min-h-screen bg-gradient-to-br from-brand-pink-100/80 via-brand-lavender-50/60 to-brand-mint-100/80 font-inter">
+        <div className="fixed inset-0 bg-[url('/images/noise.svg')] opacity-5 z-0 pointer-events-none"></div>
         <AuthProvider>
-          {children}
+          <div className="relative z-10">
+            {children}
+          </div>
         </AuthProvider>
       </body>
     </html>
