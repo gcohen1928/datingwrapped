@@ -1,15 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Comic+Neue:wght@400;700&display=swap');
+
 @import "tailwindcss";
+
+@theme {
+  --font-poppins: 'Poppins', sans-serif;
+  --font-comic: 'Comic Neue', cursive;
+  
+  /* Brand colors */
+  --color-brand-pink-100: #FFE5F0;
+  --color-brand-pink-200: #FFB6D9;
+  --color-brand-pink-300: #FF88C2;
+  --color-brand-pink-400: #FF5AAB;
+  --color-brand-pink-500: #FF2C94;
+  --color-brand-pink-600: #E60077;
+  
+  --color-brand-mint-100: #DFFFEF;
+  --color-brand-mint-200: #B0FFD9;
+  --color-brand-mint-300: #81FFC3;
+  --color-brand-mint-400: #52FFAD;
+  --color-brand-mint-500: #24FF97;
+  --color-brand-mint-600: #00E676;
+  
+  --color-brand-lavender-100: #EFE5FF;
+  --color-brand-lavender-200: #D6BDFF;
+  --color-brand-lavender-300: #BD95FF;
+  --color-brand-lavender-400: #A56DFF;
+  --color-brand-lavender-500: #8C45FF;
+  --color-brand-lavender-600: #6A1DE0;
+}
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,5 +44,33 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-poppins);
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-lavender-500 hover:bg-brand-lavender-600 text-white font-bold py-2 px-4 rounded-full transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-brand-pink-200 hover:bg-brand-pink-300 text-brand-pink-600 font-bold py-2 px-4 rounded-full transition-colors;
+  }
+  
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transition-all;
+  }
+  
+  .input-field {
+    @apply border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-lavender-300 focus:border-transparent transition-all;
+  }
+
+  .gradient-bg {
+    @apply bg-gradient-to-br from-brand-pink-300 via-brand-lavender-300 to-brand-mint-300;
+  }
 }
