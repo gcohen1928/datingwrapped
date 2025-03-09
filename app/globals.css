@@ -1,9 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Comic+Neue:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Comic+Neue:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @import "tailwindcss";
 
 @theme {
   --font-poppins: 'Poppins', sans-serif;
+  --font-inter: 'Inter', sans-serif;
   --font-comic: 'Comic Neue', cursive;
   
   /* Brand colors */
@@ -37,6 +38,11 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-inter);
+}
+
+/* Use Poppins only for specific elements like the app title and logo */
+.font-title {
   font-family: var(--font-poppins);
 }
 

@@ -45,13 +45,13 @@ export default function AuthCallback() {
           userId: data.session?.user?.id
         }));
         
-        // Redirect to dashboard on successful authentication
-        console.log('Authentication successful, redirecting to dashboard');
+        // Redirect to your-dates on successful authentication
+        console.log('Authentication successful, redirecting to your dates');
         setMessage('Authentication successful! Redirecting...');
         
         // Short delay to ensure session is properly set
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push('/your-dates');
         }, 1000);
       } catch (error: any) {
         console.error('Error during auth callback:', error);

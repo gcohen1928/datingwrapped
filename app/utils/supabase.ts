@@ -27,6 +27,13 @@ export type Tables = {
       outcome: string;
       notes: string;
       created_at: string;
+      age?: number;
+      hotness?: number;
+      occupation?: string;
+      relationship_status?: string;
+      status?: string;
+      red_flags?: string[];
+      green_flags?: string[];
     };
     Insert: Omit<Tables['dating_entries']['Row'], 'id' | 'created_at'> & { 
       id?: string;
@@ -48,4 +55,4 @@ export type Tables = {
     };
     Update: Partial<Tables['wrapped_shares']['Insert']>;
   };
-}; 
+};

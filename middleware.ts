@@ -18,9 +18,9 @@ export async function middleware(request: NextRequest) {
     request.cookies.has('sb-access-token') && 
     request.cookies.has('sb-refresh-token');
 
-  // If we have auth cookies and we're on an auth page, redirect to dashboard
+  // If we have auth cookies and we're on an auth page, redirect to your-dates
   if (hasAuthCookies && isAuthRoute) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL('/your-dates', request.url));
   }
 
   return NextResponse.next();

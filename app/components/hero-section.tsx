@@ -12,20 +12,10 @@ export default function HeroSection() {
 
   useEffect(() => {
     setIsLoaded(true)
-
-    // Add custom font
-    const link = document.createElement("link")
-    link.href = "https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
-    link.rel = "stylesheet"
-    document.head.appendChild(link)
-
-    return () => {
-      document.head.removeChild(link)
-    }
   }, [])
 
   return (
-    <section className="relative h-screen w-full overflow-hidden font-['Poppins',sans-serif]">
+    <section className="relative h-screen w-full overflow-hidden">
       {/* Gradient Background with increased opacity for lighter pastel effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-brand-pink-100/80 via-brand-lavender-100/70 to-brand-mint-100/80" />
 
@@ -35,7 +25,7 @@ export default function HeroSection() {
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">
         <motion.h1
-          className="text-4xl md:text-6xl lg:text-7xl font-bold text-purple-800 mb-6 max-w-4xl"
+          className="text-4xl md:text-6xl lg:text-7xl font-bold text-brand-lavender-500 mb-6 max-w-4xl font-inter"
           initial={{ opacity: 0, y: 50 }}
           animate={isLoaded ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8, delay: 0.2 }}
@@ -44,7 +34,7 @@ export default function HeroSection() {
         </motion.h1>
 
         <motion.p
-          className="text-xl md:text-2xl text-purple-600 mb-12 max-w-2xl"
+          className="text-xl md:text-2xl text-brand-lavender-400 mb-12 max-w-2xl"
           initial={{ opacity: 0, x: -50 }}
           animate={isLoaded ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.8, delay: 0.5 }}
@@ -69,10 +59,10 @@ export default function HeroSection() {
               </Link>
             ) : (
               <Link
-                href="/dashboard"
-                className="px-8 py-4 bg-brand-lavender-400 text-white rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                href="/your-dates"
+                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-brand-lavender-600 hover:bg-brand-lavender-700 md:py-4 md:text-lg md:px-8 shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                Go to Dashboard
+                View Your Dates
               </Link>
             )}
           </motion.div>

@@ -1,6 +1,6 @@
 import PageLayout from '../components/page-layout';
 
-export default function DashboardLayout({
+export default function SettingsLayout({
   children,
 }: {
   children: React.ReactNode;

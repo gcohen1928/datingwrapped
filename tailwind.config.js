@@ -34,7 +34,8 @@ module.exports = {
         },
       },
       fontFamily: {
-        poppins: ['Poppins', 'sans-serif'],
+        poppins: ['var(--font-poppins)', 'Poppins', 'sans-serif'],
+        inter: ['var(--font-inter)', 'Inter', 'sans-serif'],
         comic: ['Comic Neue', 'cursive'],
       },
       animation: {

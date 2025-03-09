@@ -92,9 +92,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Handle redirects based on auth state
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          // If on an auth page, redirect to dashboard
+          // If on an auth page, redirect to your dates
           if (pathname?.startsWith('/auth') && pathname !== '/auth/callback') {
-            router.push('/dashboard');
+            router.push('/your-dates');
           }
         } else if (event === 'SIGNED_OUT') {
           // If signed out, redirect to login

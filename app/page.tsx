@@ -29,7 +29,7 @@ export default function Home() {
   // Don't render anything until we're on the client
   if (!isClient) {
     return (
-      <div className="min-h-screen flex flex-col font-['Poppins',sans-serif]">
+      <div className="min-h-screen flex flex-col">
         <div className="flex items-center justify-center min-h-screen">
           <div className="w-16 h-16 border-t-4 border-purple-500 border-solid rounded-full animate-spin"></div>
         </div>
@@ -38,7 +38,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col font-['Poppins',sans-serif] overflow-x-hidden">
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
       {/* Use the NavBar component which will handle auth state */}
       <NavBar />
       
