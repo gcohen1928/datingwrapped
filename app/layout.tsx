@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={poppins.className}>
-      <body className="min-h-screen bg-gradient-to-br from-brand-pink-100 via-white to-brand-mint-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700">
+      <body className="min-h-screen bg-gradient-to-br from-brand-pink-100 via-white to-brand-mint-100">
         <AuthProvider>
           {children}
         </AuthProvider>

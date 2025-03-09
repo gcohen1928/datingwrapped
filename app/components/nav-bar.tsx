@@ -21,7 +21,7 @@ export default function NavBar() {
   // Show a loading indicator while checking auth
   if (isLoading) {
     return (
-      <nav className="bg-white shadow-md dark:bg-gray-800">
+      <nav className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
@@ -49,7 +49,7 @@ export default function NavBar() {
   // If not authenticated, show a minimal navbar with login/signup links
   if (!user) {
     return (
-      <nav className="bg-white shadow-md dark:bg-gray-800">
+      <nav className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex-shrink-0 flex items-center">
@@ -63,13 +63,13 @@ export default function NavBar() {
             <div className="flex items-center space-x-4">
               <Link 
                 href="/auth/login"
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-brand-lavender-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-lavender-500 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-brand-lavender-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-lavender-500"
               >
                 Login
               </Link>
               <Link 
                 href="/auth/signup"
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-brand-lavender-500 hover:bg-brand-lavender-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-lavender-500 dark:bg-brand-lavender-600 dark:hover:bg-brand-lavender-700"
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-gradient-to-r from-brand-lavender-500 to-brand-mint-400 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-lavender-500"
               >
                 Sign Up
               </Link>
@@ -81,7 +81,7 @@ export default function NavBar() {
   }
 
   return (
-    <nav className="bg-white shadow-md dark:bg-gray-800">
+    <nav className="bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
@@ -100,8 +100,8 @@ export default function NavBar() {
                   href={item.href}
                   className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                     pathname === item.href
-                      ? 'border-brand-lavender-500 text-gray-900 dark:text-white'
-                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white'
+                      ? 'border-brand-lavender-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                   }`}
                 >
                   {item.icon}
@@ -113,7 +113,7 @@ export default function NavBar() {
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             <button
               onClick={signOut}
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-brand-lavender-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-lavender-500 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-brand-lavender-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-lavender-500"
             >
               <FaSignOutAlt className="mr-2" />
               Sign out
@@ -131,8 +131,8 @@ export default function NavBar() {
               href={item.href}
               className={`flex items-center px-3 py-2 text-base font-medium ${
                 pathname === item.href
-                  ? 'bg-brand-lavender-50 border-brand-lavender-500 text-brand-lavender-700 border-l-4 dark:bg-gray-700 dark:text-white'
-                  : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 border-l-4 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+                  ? 'bg-brand-lavender-50 border-brand-lavender-500 text-brand-lavender-700 border-l-4'
+                  : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 border-l-4'
               }`}
             >
               {item.icon}
@@ -141,7 +141,7 @@ export default function NavBar() {
           ))}
           <button
             onClick={signOut}
-            className="flex w-full items-center px-3 py-2 text-base font-medium border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 border-l-4 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+            className="flex w-full items-center px-3 py-2 text-base font-medium border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 border-l-4"
           >
             <FaSignOutAlt className="mr-2" />
             Sign out
