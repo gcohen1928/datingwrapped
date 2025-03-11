@@ -89,3 +89,34 @@ body {
 .animate-fadeIn {
   animation: fadeIn 0.2s ease-out forwards;
 }
+
+/* Table animations */
+@keyframes expandRow {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: 400px;
+    opacity: 1;
+  }
+}
+
+@keyframes collapseRow {
+  from {
+    max-height: 400px;
+    opacity: 1;
+  }
+  to {
+    max-height: 0;
+    opacity: 0;
+  }
+}
+
+.animate-expand {
+  animation: expandRow 0.35s ease-out forwards;
+}
+
+.animate-collapse {
+  animation: collapseRow 0.35s ease-in forwards;
+}

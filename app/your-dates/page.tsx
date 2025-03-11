@@ -62,22 +62,8 @@ export default function YourDates() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Your Dating Log</h1>
         <p className="text-gray-600 dark:text-gray-300 mb-6">
-          Log your dating experiences in the table below. Your data will automatically sync to your account.
+          Browse through your dating experiences with our interactive interface. Your data will automatically sync to your account.
         </p>
-        
-        <div className="bg-brand-lavender-50 border border-brand-lavender-200 rounded-lg p-4 flex items-start mb-8">
-          <FaInfoCircle className="text-brand-lavender-500 mt-1 mr-3 flex-shrink-0" />
-          <div>
-            <h3 className="font-semibold text-brand-lavender-700 mb-1">Tips for using the data table:</h3>
-            <ul className="text-sm text-brand-lavender-700 list-disc list-inside space-y-1">
-              <li>Click "Add Person" to add a new row to the table</li>
-              <li>Changes save automatically as you edit each field</li>
-              <li>Use the Rating stars to rate your experiences from 1-5</li>
-              <li>Add notes to remember special moments or details</li>
-              <li>Visit the Stats page to see insights based on your data</li>
-            </ul>
-          </div>
-        </div>
       </div>
       
       {process.env.NODE_ENV === 'development' && (

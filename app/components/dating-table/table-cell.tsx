@@ -12,8 +12,6 @@ export const platformOptions = [
   'Tinder',
   'Hinge',
   'Bumble',
-  'OkCupid',
-  'Coffee Meets Bagel',
   'Match',
   'IRL',
   'Through Friends',
@@ -130,7 +128,7 @@ export function SelectCell({
   options
 }: BaseCellProps & { options: string[] }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [selectedOption, setSelectedOption] = useState<string | null>(value || null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   // Close dropdown when clicking outside
@@ -147,13 +145,6 @@ export function SelectCell({
     };
   }, []);
   
-  // Reset highlighted index when dropdown opens/closes
-  useEffect(() => {
-    if (!isOpen) {
-      setHighlightedIndex(-1);
-    }
-  }, [isOpen]);
-  
   // Color mapping for different dropdown values
   const getColorForOption = (option: string, fieldId: string) => {
     // Platform colors
@@ -162,8 +153,6 @@ export function SelectCell({
         'Tinder': 'bg-red-500',
         'Hinge': 'bg-pink-500',
         'Bumble': 'bg-yellow-500',
-        'OkCupid': 'bg-blue-500',
-        'Coffee Meets Bagel': 'bg-brown-500',
         'Match': 'bg-orange-500',
         'IRL': 'bg-green-500',
         'Through Friends': 'bg-purple-500',
@@ -216,6 +205,7 @@ export function SelectCell({
   };
 
   const handleSelect = (option: string) => {
+    setSelectedOption(option);
     onUpdate(rowIndex, id, option);
     setIsOpen(false);
   };
@@ -230,7 +220,7 @@ export function SelectCell({
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative w-full" ref={dropdownRef}>
       {/* Badge/Button that opens dropdown */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -272,37 +262,34 @@ export function SelectCell({
         )}
       </button>
       
-      {/* Custom dropdown */}
-      {isOpen && (
-        <div 
-          className="absolute z-50 mt-1 w-56 bg-white rounded-md shadow-lg max-h-60 overflow-auto border border-gray-200 right-0 animate-fadeIn"
-          role="listbox"
-        >
-          <div className="py-1">
-            {options.map((option, index) => (
+      {/* Animated inline options */}
+      <div 
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isOpen ? 'max-h-60 opacity-100 mt-2' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="bg-white rounded-md shadow-sm border border-gray-200 p-2">
+          <div className="flex flex-col divide-y divide-gray-100 max-h-57 overflow-y-auto">
+            {options.map((option) => (
               <div
                 key={option}
                 onClick={() => handleSelect(option)}
-                onMouseEnter={() => setHighlightedIndex(index)}
-                onMouseLeave={() => setHighlightedIndex(-1)}
-                className={`flex items-center px-3 py-2 text-sm cursor-pointer transition-colors ${
-                  highlightedIndex === index 
-                    ? 'bg-brand-lavender-50' 
+                className={`flex items-center px-3 py-2.5 text-sm cursor-pointer transition-all ${
+                  value === option 
+                    ? 'bg-brand-lavender-50 text-brand-lavender-800 font-medium' 
                     : 'hover:bg-gray-50'
-                } ${value === option ? 'bg-brand-lavender-50/50' : ''}`}
+                }`}
                 role="option"
                 aria-selected={value === option}
               >
                 <span 
-                  className={`mr-2 w-3 h-3 rounded-full ${getColorForOption(option, id)} transition-transform ${
-                    highlightedIndex === index || value === option ? 'scale-125' : ''
+                  className={`mr-3 w-3 h-3 rounded-full ${getColorForOption(option, id)} transition-transform ${
+                    value === option ? 'scale-125' : ''
                   }`}
                 ></span>
-                <span className={`${value === option ? 'font-medium text-brand-lavender-700' : ''} transition-colors`}>
-                  {option}
-                </span>
+                <span>{option}</span>
                 {value === option && (
-                  <svg className="ml-auto h-4 w-4 text-brand-lavender-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <svg className="ml-auto h-4 w-4 text-brand-lavender-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 )}
@@ -310,7 +297,7 @@ export function SelectCell({
             ))}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
