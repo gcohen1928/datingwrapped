@@ -6,6 +6,10 @@ import { Tables } from '../../utils/supabase';
 type DatingEntry = Tables['dating_entries']['Row'];
 type NewDatingEntry = Tables['dating_entries']['Insert'];
 
+// Extended types to include temporary animation properties
+type ExtendedDatingEntry = DatingEntry & { tempId?: string };
+type ExtendedNewDatingEntry = NewDatingEntry & { tempId?: string };
+
 export async function fetchUserEntries() {
   try {
     // Get current user
@@ -30,8 +34,11 @@ export async function fetchUserEntries() {
   }
 }
 
-export async function saveEntry(userId: string, entry: DatingEntry | NewDatingEntry) {
+export async function saveEntry(userId: string, entry: ExtendedDatingEntry | ExtendedNewDatingEntry) {
   try {
+    // Create a copy without the tempId property
+    const { tempId, ...entryWithoutTempId } = entry;
+    
     if ('id' in entry) {
       // Update existing entry
       const { error } = await supabase

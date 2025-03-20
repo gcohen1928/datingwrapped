@@ -20,28 +20,32 @@ import {
 type DatingEntry = Tables['dating_entries']['Row'];
 type NewDatingEntry = Tables['dating_entries']['Insert'];
 
-const columnHelper = createColumnHelper<DatingEntry | NewDatingEntry>();
+// Extended types to include temporary animation properties
+type ExtendedDatingEntry = DatingEntry & { tempId?: string };
+type ExtendedNewDatingEntry = NewDatingEntry & { tempId?: string };
+
+const columnHelper = createColumnHelper<ExtendedDatingEntry | ExtendedNewDatingEntry>();
 
 type UpdateHandlerType = (index: number, id: string, value: any) => void;
 type DeleteHandlerType = (index: number) => void;
 
 // Default column sizes
 const defaultColumnSizes = {
-  person_name: 200,
-  age: 80,
-  occupation: 180,
-  relationship_status: 180,
-  platform: 150,
+  person_name: 250,
+  age: 140,
+  occupation: 240,
+  relationship_status: 120,
+  platform: 100,
   num_dates: 80,
   total_cost: 100,
-  avg_duration: 100,
+  avg_duration: 80,
   hotness: 120,
   rating: 120,
   outcome: 150,
   status: 120,
-  red_flags: 200,
-  green_flags: 200,
-  notes: 250,
+  red_flags: 360,
+  green_flags: 400,
+  notes: 435,
   actions: 80,
 };
 
@@ -245,22 +249,6 @@ export function useTableColumns(
         />
       ),
     }),
-    columnHelper.accessor('red_flags', {
-      header: () => <FlagHeader color="text-red-500" label="Red Flags" />,
-      size: defaultColumnSizes.red_flags,
-      minSize: 120,
-      maxSize: 400,
-      cell: ({ row, getValue, column: { id } }) => (
-        <FlagsCell
-          row={row.original}
-          rowIndex={row.index}
-          id={id}
-          value={getValue()}
-          onUpdate={updateHandler}
-          flagColor="text-red-500"
-        />
-      ),
-    }),
     columnHelper.accessor('green_flags', {
       header: () => <FlagHeader color="text-green-500" label="Green Flags" />,
       size: defaultColumnSizes.green_flags,
@@ -274,6 +262,22 @@ export function useTableColumns(
           value={getValue()}
           onUpdate={updateHandler}
           flagColor="text-green-500"
+        />
+      ),
+    }),
+    columnHelper.accessor('red_flags', {
+      header: () => <FlagHeader color="text-red-500" label="Red Flags" />,
+      size: defaultColumnSizes.red_flags,
+      minSize: 120,
+      maxSize: 400,
+      cell: ({ row, getValue, column: { id } }) => (
+        <FlagsCell
+          row={row.original}
+          rowIndex={row.index}
+          id={id}
+          value={getValue()}
+          onUpdate={updateHandler}
+          flagColor="text-red-500"
         />
       ),
     }),

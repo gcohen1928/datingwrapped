@@ -6,23 +6,39 @@ import {
   getCoreRowModel,
   useReactTable,
   ColumnResizeMode,
+  getFilteredRowModel,
+  ColumnFiltersState,
+  FilterFn,
+  FilterFnOption,
 } from '@tanstack/react-table';
 import { FaPlus, FaHeart } from 'react-icons/fa';
 import { Tables } from '../../utils/supabase';
 import { useTableColumns } from './table-columns';
 import { fetchUserEntries, saveEntry, deleteEntry, createNewEntry } from './data-service';
+import ContextMenu from './context-menu';
 
 type DatingEntry = Tables['dating_entries']['Row'];
 type NewDatingEntry = Tables['dating_entries']['Insert'];
 
-export default function DatingTable() {
-  const [data, setData] = useState<(DatingEntry | NewDatingEntry)[]>([]);
+// Extended types to include temporary animation properties
+type ExtendedDatingEntry = DatingEntry & { tempId?: string };
+type ExtendedNewDatingEntry = NewDatingEntry & { tempId?: string };
+
+interface DatingTableProps {
+  searchFilter?: string;
+}
+
+export default function DatingTable({ searchFilter = '' }: DatingTableProps) {
+  const [data, setData] = useState<(ExtendedDatingEntry | ExtendedNewDatingEntry)[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [columnResizeMode] = useState<ColumnResizeMode>('onChange');
   const [columnSizing, setColumnSizing] = useState({});
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [animatingRows, setAnimatingRows] = useState<{id: string, action: 'add' | 'remove', index: number}[]>([]);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; rowIndex: number } | null>(null);
 
   // Fetch data on component mount
   useEffect(() => {
@@ -42,6 +58,60 @@ export default function DatingTable() {
     loadData();
   }, []);
 
+  // Update column filters when searchFilter changes
+  useEffect(() => {
+    if (!searchFilter.trim()) {
+      setColumnFilters([]);
+      return;
+    }
+
+    setColumnFilters([
+      {
+        id: 'person_name',
+        value: searchFilter
+      }
+    ]);
+  }, [searchFilter]);
+
+  // Global fuzzy filter function for the table
+  const fuzzyFilter: FilterFn<ExtendedDatingEntry | ExtendedNewDatingEntry> = (row, columnId, filterValue) => {
+    if (!filterValue.trim()) return true;
+    
+    const searchTermLower = filterValue.toLowerCase();
+    const value = (row.getValue(columnId) || '').toString().toLowerCase();
+    
+    // Direct match (highest priority)
+    if (value.includes(searchTermLower)) {
+      return true;
+    }
+    
+    // Fuzzy match - check if characters appear in sequence
+    let searchIndex = 0;
+    for (let i = 0; i < value.length; i++) {
+      if (searchIndex < searchTermLower.length && value[i] === searchTermLower[searchIndex]) {
+        searchIndex++;
+      }
+    }
+    
+    // If we matched all characters in the search term
+    if (searchIndex === searchTermLower.length) {
+      return true;
+    }
+    
+    // Check for typos (allowing one character difference)
+    if (searchTermLower.length > 2) {
+      // Check if removing one char from search term finds a match
+      for (let i = 0; i < searchTermLower.length; i++) {
+        const typoSearch = searchTermLower.slice(0, i) + searchTermLower.slice(i + 1);
+        if (value.includes(typoSearch)) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  };
+
   // Handler for updating a cell
   const handleCellUpdate = async (index: number, id: string, value: any) => {
     if (!userId) return;
@@ -59,7 +129,7 @@ export default function DatingTable() {
       // If this was a new entry, update with the returned data
       if (savedEntry && !('id' in row)) {
         setData(prev => 
-          prev.map((item, i) => i === index ? savedEntry : item)
+          prev.map((item, i) => i === index ? { ...savedEntry, tempId: (item as ExtendedNewDatingEntry).tempId } : item)
         );
       }
     } catch (error: any) {
@@ -73,21 +143,43 @@ export default function DatingTable() {
     if (!userId) return;
     
     const newRow = createNewEntry(userId, data.length);
-    setData([newRow, ...data]);
+    const newRowId = `new-${Date.now()}`;
+    
+    // Add animation marker
+    setAnimatingRows(prev => [...prev, { id: newRowId, action: 'add', index: data.length }]);
+    
+    // Add the new row with tempId
+    setData([...data, { ...newRow, tempId: newRowId }]);
+    
+    // Remove animation marker after animation completes
+    setTimeout(() => {
+      setAnimatingRows(prev => prev.filter(row => row.id !== newRowId));
+    }, 500); // Match this with the CSS animation duration
   };
 
   // Handler for deleting a row
   const handleDeleteRow = async (index: number) => {
     try {
       const row = data[index];
+      const rowId = 'id' in row && row.id ? row.id.toString() : (row.tempId || `temp-${index}-${Date.now()}`);
       
-      // If it has an ID, delete from database
-      if ('id' in row && row.id) {
-        await deleteEntry(row.id);
-      }
+      // Add animation marker before removing
+      setAnimatingRows(prev => [...prev, { id: rowId, action: 'remove', index }]);
       
-      // Remove from local state
-      setData(prev => prev.filter((_, i) => i !== index));
+      // Wait for animation to complete before removing from state
+      setTimeout(async () => {
+        // If it has an ID, delete from database
+        if ('id' in row && row.id) {
+          await deleteEntry(row.id);
+        }
+        
+        // Remove from local state
+        setData(prev => prev.filter((_, i) => i !== index));
+        
+        // Remove animation marker
+        setAnimatingRows(prev => prev.filter(row => row.id !== rowId));
+      }, 500); // Increased from 300ms to 500ms to match the animation duration
+      
     } catch (error: any) {
       console.error('Error deleting row:', error);
       setError(error.message);
@@ -104,16 +196,74 @@ export default function DatingTable() {
     columnResizeMode,
     state: {
       columnSizing,
+      columnFilters,
     },
     onColumnSizingChange: setColumnSizing,
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    filterFns: {
+      fuzzy: fuzzyFilter,
+    },
     enableColumnResizing: true,
     defaultColumn: {
       minSize: 60,
       maxSize: 500,
       size: 150,
+      filterFn: fuzzyFilter as FilterFnOption<ExtendedDatingEntry | ExtendedNewDatingEntry>,
     },
   });
+
+  // Helper to get animation class for a row
+  const getRowAnimationClass = (rowIndex: number) => {
+    const animatingRow = animatingRows.find(row => row.index === rowIndex);
+    if (!animatingRow) return '';
+    
+    if (animatingRow.action === 'add') {
+      return 'animate-slide-in-from-bottom';
+    } else if (animatingRow.action === 'remove') {
+      return 'animate-slide-out';
+    }
+    return '';
+  };
+
+  // Helper to get row style based on animation state
+  const getRowStyle = (rowIndex: number) => {
+    const animatingRow = animatingRows.find(row => row.index === rowIndex && row.action === 'remove');
+    if (animatingRow) {
+      return { 
+        height: '0',
+        overflow: 'hidden'
+      };
+    }
+    return {};
+  };
+
+  // Handler for right click on row
+  const handleRowContextMenu = (event: React.MouseEvent, rowIndex: number) => {
+    event.preventDefault(); // Prevent default browser context menu
+    setContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+      rowIndex
+    });
+  };
+
+  // Close context menu
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+  };
+
+  // Delete row from context menu
+  const handleContextMenuDelete = () => {
+    if (contextMenu !== null) {
+      handleDeleteRow(contextMenu.rowIndex);
+      setContextMenu(null);
+    }
+  };
+
+  // Calculate visible entries count
+  const visibleRows = table.getRowModel().rows.length;
 
   // Loading state
   if (loading) {
@@ -140,7 +290,10 @@ export default function DatingTable() {
   return (
     <div className="mb-8 font-inter">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Your Dating Entries</h2>
+        <h2 className="text-xl font-semibold">
+          {searchFilter ? `Results for "${searchFilter}"` : 'Your Dating Entries'}
+          {searchFilter && ` (${visibleRows} entries)`}
+        </h2>
         <button
           onClick={handleAddRow}
           className="flex items-center space-x-2 bg-brand-lavender-500 text-white font-medium py-2 px-4 rounded-md hover:bg-brand-lavender-600 transition-colors"
@@ -150,16 +303,22 @@ export default function DatingTable() {
         </button>
       </div>
       
-      {table.getRowModel().rows.length === 0 ? (
+      {visibleRows === 0 ? (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-          <p className="text-gray-500 mb-4">No dating entries yet. Add your first one!</p>
-          <button
-            onClick={handleAddRow}
-            className="inline-flex items-center space-x-2 bg-brand-lavender-500 text-white font-medium py-2 px-4 rounded-md hover:bg-brand-lavender-600 transition-colors"
-          >
-            <FaPlus className="text-sm" />
-            <span>Add Your First Date</span>
-          </button>
+          {searchFilter ? (
+            <p className="text-gray-500 mb-4">No entries found matching "{searchFilter}".</p>
+          ) : (
+            <>
+              <p className="text-gray-500 mb-4">No dating entries yet. Add your first one!</p>
+              <button
+                onClick={handleAddRow}
+                className="inline-flex items-center space-x-2 bg-brand-lavender-500 text-white font-medium py-2 px-4 rounded-md hover:bg-brand-lavender-600 transition-colors"
+              >
+                <FaPlus className="text-sm" />
+                <span>Add Your First Date</span>
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <div ref={tableContainerRef} className="border border-gray-200 rounded-lg overflow-auto shadow-sm">
@@ -203,30 +362,49 @@ export default function DatingTable() {
               ))}
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {table.getRowModel().rows.map(row => (
-                <tr 
-                  key={row.id} 
-                  className="hover:bg-gray-50 transition-all duration-300 ease-in-out"
-                >
-                  {row.getVisibleCells().map(cell => (
-                    <td 
-                      key={cell.id} 
-                      className="px-6 py-3 text-sm text-gray-700 border-r border-gray-100 last:border-r-0 relative transition-all duration-300 ease-in-out"
-                      style={{
-                        width: cell.column.getSize(),
-                      }}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
+              {table.getRowModel().rows.map(row => {
+                // Create a stable row key based on id or tempId
+                const rowData = row.original as ExtendedDatingEntry | ExtendedNewDatingEntry;
+                const rowKey = 'id' in rowData && rowData.id 
+                  ? `row-${rowData.id}` 
+                  : `row-temp-${rowData.tempId || row.id}`;
+                
+                return (
+                  <tr 
+                    key={rowKey}
+                    className={`hover:bg-gray-50 transition-all duration-500 ease-in-out ${getRowAnimationClass(row.index)}`}
+                    style={getRowStyle(row.index)}
+                    onContextMenu={(e) => handleRowContextMenu(e, row.index)}
+                  >
+                    {row.getVisibleCells().map(cell => (
+                      <td 
+                        key={`${rowKey}-${cell.column.id}`}
+                        className="px-6 py-3 text-sm text-gray-700 border-r border-gray-100 last:border-r-0 relative transition-all duration-500 ease-in-out"
+                        style={{
+                          width: cell.column.getSize(),
+                        }}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
+      )}
+      
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={handleCloseContextMenu}
+          onDelete={handleContextMenuDelete}
+        />
       )}
       
       <style jsx global>{`
@@ -249,11 +427,89 @@ export default function DatingTable() {
         
         /* Animation for row height transitions */
         tr {
-          will-change: height;
+          will-change: height, transform, opacity;
+          border-color: #f3f4f6 !important; /* Ensure border color stays consistent */
+          transform-origin: center top;
+          transition: height 500ms ease-in-out, opacity 500ms ease-in-out, transform 500ms ease-in-out;
+          box-sizing: border-box;
         }
         
         td {
           will-change: padding;
+          transition: padding 500ms ease-in-out;
+          box-sizing: border-box;
+        }
+        
+        /* Prevent border color flash */
+        tbody tr:first-child {
+          border-top-color: #f3f4f6 !important;
+        }
+        
+        tbody.bg-white {
+          border-top-color: #f3f4f6 !important;
+        }
+        
+        /* Row animations */
+        @keyframes slideInFromBottom {
+          0% {
+            transform: translateY(20px);
+            opacity: 0;
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-bottom: -1px;
+            border-top-width: 0;
+          }
+          20% {
+            border-top-width: 1px;
+          }
+          100% {
+            transform: translateY(0);
+            opacity: 1;
+            max-height: 100px;
+            padding-top: inherit;
+            padding-bottom: inherit;
+            margin-bottom: 0;
+          }
+        }
+        
+        @keyframes slideOut {
+          0% {
+            transform: translateY(0);
+            opacity: 1;
+            max-height: 100px;
+            padding-top: inherit;
+            padding-bottom: inherit;
+            border-top-width: 1px;
+          }
+          40% {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          60% {
+            border-top-width: 0;
+          }
+          100% {
+            transform: translateY(-20px);
+            opacity: 0;
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-top: -1px;
+            margin-bottom: -1px;
+            border-width: 0;
+          }
+        }
+        
+        .animate-slide-in-from-bottom {
+          animation: slideInFromBottom 500ms ease-out forwards;
+          overflow: hidden;
+        }
+        
+        .animate-slide-out {
+          animation: slideOut 500ms ease-in forwards;
+          overflow: hidden;
+          pointer-events: none;
         }
       `}</style>
     </div>

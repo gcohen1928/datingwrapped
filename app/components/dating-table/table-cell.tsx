@@ -7,6 +7,19 @@ import { useState, useEffect, useRef } from 'react';
 type DatingEntry = Tables['dating_entries']['Row'];
 type NewDatingEntry = Tables['dating_entries']['Insert'];
 
+// Extended types to include temporary animation properties
+type ExtendedDatingEntry = DatingEntry & { tempId?: string };
+type ExtendedNewDatingEntry = NewDatingEntry & { tempId?: string };
+
+// Format the field name for display
+const formatFieldName = (fieldName: string) => {
+  return fieldName
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 // Options for select inputs
 export const platformOptions = [
   'Tinder',
@@ -46,9 +59,36 @@ export const statusOptions = [
   'Archived'
 ];
 
+// Common flag options
+export const greenFlagOptions = [
+  'Great communication',
+  'Emotionally available',
+  'Respects boundaries',
+  'Financially responsible',
+  'Supportive',
+  'Good listener',
+  'Family-oriented',
+  'Ambitious',
+  'Sense of humor',
+  'Consistent'
+];
+
+export const redFlagOptions = [
+  'Poor communication',
+  'Controlling behavior',
+  'Disrespects boundaries',
+  'Financially irresponsible',
+  'Love bombing',
+  'Jealousy issues',
+  'Emotionally unavailable',
+  'Constantly on phone',
+  'Doesn\'t ask questions',
+  'Inconsistent'
+];
+
 // Base props for all cell types
 interface BaseCellProps {
-  row: DatingEntry | NewDatingEntry;
+  row: ExtendedDatingEntry | ExtendedNewDatingEntry;
   rowIndex: number;
   id: string;
   value: any;
@@ -57,21 +97,51 @@ interface BaseCellProps {
 
 // Text input cell
 export function TextCell({ row, rowIndex, id, value, onUpdate }: BaseCellProps) {
-  const [localValue, setLocalValue] = useState(value || '');
+  const [localValue, setLocalValue] = useState(() => {
+    // Don't autopopulate certain fields for new rows
+    if (row.id === undefined && ['name'].includes(id)) {
+      return '';
+    }
+    return value || '';
+  });
   
-  // Update local value when prop value changes
+  // Ref to track if update is in progress
+  const isUpdatingRef = useRef(false);
+  
+  // Update local value when prop value changes, but only if not in the middle of an update
   useEffect(() => {
-    setLocalValue(value || '');
-  }, [value]);
+    // Don't autopopulate certain fields for new rows
+    if (row.id === undefined && ['name'].includes(id)) {
+      return;
+    }
+    
+    // Only update if we're not currently in the middle of an update operation
+    if (!isUpdatingRef.current) {
+      setLocalValue(value || '');
+    }
+  }, [value, id, row.id]);
+  
+  const handleBlur = () => {
+    // Set flag to prevent useEffect from overriding our value during the update cycle
+    isUpdatingRef.current = true;
+    
+    // Update the parent component
+    onUpdate(rowIndex, id, localValue);
+    
+    // Reset the flag after a small delay to allow the update to propagate
+    setTimeout(() => {
+      isUpdatingRef.current = false;
+    }, 50);
+  };
   
   return (
     <input
       type="text"
       value={localValue}
       onChange={e => setLocalValue(e.target.value)}
-      onBlur={() => onUpdate(rowIndex, id, localValue)}
+      onBlur={handleBlur}
       className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none"
-      placeholder={`Enter ${id}`}
+      placeholder={formatFieldName(id)}
     />
   );
 }
@@ -93,27 +163,55 @@ export function NumberCell({
   step?: string;
   placeholder?: string;
 }) {
-  const [localValue, setLocalValue] = useState<string | number>(value ?? '');
+  const [localValue, setLocalValue] = useState<string | number>(() => {
+    // Don't autopopulate certain fields for new rows
+    if (row.id === undefined && ['number_of_dates', 'total_cost', 'avg_duration'].includes(id)) {
+      return '';
+    }
+    return value ?? '';
+  });
   
-  // Update local value when prop value changes
+  // Ref to track if update is in progress
+  const isUpdatingRef = useRef(false);
+  
+  // Update local value when prop value changes, but only if not in the middle of an update
   useEffect(() => {
-    setLocalValue(value ?? '');
-  }, [value]);
+    // Don't autopopulate certain fields for new rows
+    if (row.id === undefined && ['number_of_dates', 'total_cost', 'avg_duration'].includes(id)) {
+      return;
+    }
+    
+    // Only update if we're not currently in the middle of an update operation
+    if (!isUpdatingRef.current) {
+      setLocalValue(value ?? '');
+    }
+  }, [value, id, row.id]);
+  
+  const handleBlur = () => {
+    // Set flag to prevent useEffect from overriding our value during the update cycle
+    isUpdatingRef.current = true;
+    
+    // Update the parent component
+    const val = localValue ? parseFloat(localValue.toString()) : undefined;
+    onUpdate(rowIndex, id, val);
+    
+    // Reset the flag after a small delay to allow the update to propagate
+    setTimeout(() => {
+      isUpdatingRef.current = false;
+    }, 50);
+  };
   
   return (
     <input
       type="number"
       value={localValue}
       onChange={e => setLocalValue(e.target.value)}
-      onBlur={() => {
-        const val = localValue ? parseFloat(localValue.toString()) : undefined;
-        onUpdate(rowIndex, id, val);
-      }}
+      onBlur={handleBlur}
       className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none"
       min={min}
       max={max}
       step={step}
-      placeholder={placeholder || `Enter ${id}`}
+      placeholder={placeholder || formatFieldName(id)}
     />
   );
 }
@@ -128,7 +226,13 @@ export function SelectCell({
   options
 }: BaseCellProps & { options: string[] }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<string | null>(value || null);
+  const [selectedOption, setSelectedOption] = useState<string | null>(() => {
+    // Don't autopopulate certain fields for new rows
+    if (row.id === undefined && ['relationship_status', 'platform', 'outcome', 'status'].includes(id)) {
+      return null;
+    }
+    return value || null;
+  });
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   // Close dropdown when clicking outside
@@ -144,6 +248,15 @@ export function SelectCell({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+  
+  // Update selected option when prop value changes
+  useEffect(() => {
+    // Don't autopopulate certain fields for new rows
+    if (row.id === undefined && ['relationship_status', 'platform', 'outcome', 'status'].includes(id)) {
+      return;
+    }
+    setSelectedOption(value || null);
+  }, [value, id, row.id]);
   
   // Color mapping for different dropdown values
   const getColorForOption = (option: string, fieldId: string) => {
@@ -210,15 +323,6 @@ export function SelectCell({
     setIsOpen(false);
   };
 
-  // Format the field name for display
-  const formatFieldName = (fieldName: string) => {
-    return fieldName
-      .replace(/_/g, ' ')
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
   return (
     <div className="relative w-full" ref={dropdownRef}>
       {/* Badge/Button that opens dropdown */}
@@ -269,7 +373,7 @@ export function SelectCell({
         }`}
       >
         <div className="bg-white rounded-md shadow-sm border border-gray-200 p-2">
-          <div className="flex flex-col divide-y divide-gray-100 max-h-57 overflow-y-auto">
+          <div className="flex flex-col divide-y divide-gray-100 max-h-36 overflow-y-auto">
             {options.map((option) => (
               <div
                 key={option}
@@ -369,7 +473,7 @@ export function TextareaCell({
       onBlur={() => onUpdate(rowIndex, id, localValue)}
       className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none resize-none"
       rows={rows}
-      placeholder={placeholder || `Enter ${id}`}
+      placeholder={placeholder || formatFieldName(id)}
     />
   );
 }
@@ -383,33 +487,225 @@ export function FlagsCell({
   onUpdate,
   flagColor = "text-red-500"
 }: BaseCellProps & { flagColor?: string }) {
-  const flags = value || [];
-  const [localValue, setLocalValue] = useState(Array.isArray(flags) ? flags.join(', ') : '');
+  const [isOpen, setIsOpen] = useState(false);
+  const [flags, setFlags] = useState<string[]>(Array.isArray(value) ? value : []);
+  const [inputValue, setInputValue] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [flagToRemove, setFlagToRemove] = useState<string | null>(null);
+  const [newFlag, setNewFlag] = useState<string | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
   
-  // Update local value when prop value changes
+  // Update local flags when prop value changes
   useEffect(() => {
-    setLocalValue(Array.isArray(flags) ? flags.join(', ') : '');
-  }, [flags]);
-  
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setLocalValue(e.target.value);
+    setFlags(Array.isArray(value) ? value : []);
+  }, [value]);
+
+
+  const addFlag = (flag: string, updateParent = false) => {
+    if (flag.trim() && !flags.includes(flag.trim())) {
+      const trimmedFlag = flag.trim();
+      setNewFlag(trimmedFlag);
+      const newFlags = [...flags, trimmedFlag];
+      setFlags(newFlags);
+      setHasChanges(true);
+      
+      if (updateParent) {
+        onUpdate(rowIndex, id, newFlags);
+        setHasChanges(false);
+      }
+      
+      setInputValue('');
+      
+      // Clear the new flag highlight after animation completes
+      setTimeout(() => {
+        setNewFlag(null);
+      }, 1000);
+    }
   };
-  
-  const handleBlur = () => {
-    // Split by commas and trim whitespace
-    const flagsArray = localValue.split(',').map(flag => flag.trim()).filter(Boolean);
-    onUpdate(rowIndex, id, flagsArray);
+
+  const removeFlag = (flag: string, updateParent = false) => {
+    setFlagToRemove(flag);
+    // Use setTimeout to allow animation to complete before removing from state
+    setTimeout(() => {
+      const newFlags = flags.filter(f => f !== flag);
+      setFlags(newFlags);
+      setHasChanges(true);
+      
+      if (updateParent) {
+        onUpdate(rowIndex, id, newFlags);
+        setHasChanges(false);
+      }
+      
+      setFlagToRemove(null);
+    }, 300); // Match the duration of the animation
   };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && inputValue.trim()) {
+      e.preventDefault();
+      addFlag(inputValue, false);
+    } else if (e.key === 'Backspace' && inputValue === '' && flags.length > 0) {
+      const lastFlag = flags[flags.length - 1];
+      removeFlag(lastFlag, false);
+    }
+  };
+
+  // Save changes when the dropdown is closed
+  const handleToggleDropdown = () => {
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+    
+    // If closing the dropdown and there are changes, update the parent
+    if (!newIsOpen && hasChanges) {
+      onUpdate(rowIndex, id, flags);
+      setHasChanges(false);
+    }
+  };
+
+  // Get flag options based on the flag type
+  const getFlagOptions = () => {
+    if (id === 'green_flags') return greenFlagOptions;
+    if (id === 'red_flags') return redFlagOptions;
+    return [];
+  };
+
+  // Determine the color of the badges based on flagColor
+  const getBadgeColor = () => {
+    if (flagColor === 'text-red-500') return 'bg-red-500';
+    if (flagColor === 'text-green-500') return 'bg-green-500';
+    return 'bg-gray-500';
+  };
+
+  // Filter options that are not already selected
+  const filteredOptions = getFlagOptions().filter(option => !flags.includes(option));
+  // Filter options based on input value
+  const matchingOptions = filteredOptions.filter(option => 
+    inputValue ? option.toLowerCase().includes(inputValue.toLowerCase()) : true
+  );
   
   return (
-    <textarea
-      value={localValue}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none resize-none"
-      rows={2}
-      placeholder={`Comma-separated ${id}...`}
-    />
+    <div className="relative w-full" ref={dropdownRef}>
+      {/* Badges container */}
+      <div 
+        onClick={handleToggleDropdown}
+        className="flex flex-wrap gap-1 min-h-[24px] cursor-pointer"
+      >
+        {flags.length > 0 ? (
+          flags.map((flag, index) => (
+            <div 
+              key={index} 
+              className={`flex items-center transition-all duration-300 ${
+                flagToRemove === flag ? 'scale-0 opacity-0' : 
+                newFlag === flag ? 'scale-105 opacity-100 animate-pulse' : 'scale-100 opacity-100'
+              }`}
+            >
+              <span 
+                className={`px-2 py-1 rounded-full text-xs font-medium text-white ${getBadgeColor()} transition-all hover:shadow-md ${
+                  newFlag === flag ? 'shadow-md' : ''
+                }`}
+              >
+                {flag}
+                <button
+                  type="button"
+                  className="ml-1 text-white focus:outline-none hover:text-gray-200 inline-flex"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeFlag(flag, false);
+                  }}
+                >
+                  ×
+                </button>
+              </span>
+            </div>
+          ))
+        ) : (
+          <div className="text-gray-400 text-sm">
+            Add {formatFieldName(id)}...
+          </div>
+        )}
+      </div>
+
+      {/* Animated input field and options */}
+      <div 
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isOpen ? 'max-h-96 opacity-100 mt-2' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="bg-white rounded-md shadow-sm border border-gray-200 p-2">
+          <div className="flex flex-col divide-y divide-gray-100">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type or select a flag..."
+              className="w-full p-2 border-b border-gray-200 focus:ring-0 focus:outline-none text-sm"
+            />
+            
+            {/* Common flags options */}
+            <div className="mt-2 py-2">
+              <div className="text-xs text-gray-500 mb-2 px-2">Common {formatFieldName(id)}:</div>
+              <div className="flex flex-col divide-y divide-gray-100 max-h-36 overflow-y-auto">
+                {matchingOptions.map((option) => (
+                  <div
+                    key={option}
+                    onClick={() => addFlag(option, false)}
+                    className="flex items-center px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 transition-all"
+                    role="option"
+                  >
+                    <span 
+                      className={`mr-3 w-3 h-3 rounded-full ${getBadgeColor()} transition-transform`}
+                    ></span>
+                    <span>{option}</span>
+                  </div>
+                ))}
+                {matchingOptions.length === 0 && inputValue && (
+                  <div className="px-3 py-2 text-sm text-gray-500 italic">
+                    Press Enter to add "{inputValue}"
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Current flags */}
+            {flags.length > 0 && (
+              <div className="mt-2 pt-2">
+                <div className="text-xs text-gray-500 mb-1 px-2">Current {formatFieldName(id)}:</div>
+                <div className="flex flex-wrap gap-1 px-2 pb-1">
+                  {flags.map((flag, index) => (
+                    <div 
+                      key={index} 
+                      className={`flex items-center transition-all duration-300 ${
+                        flagToRemove === flag ? 'scale-0 opacity-0' : 
+                        newFlag === flag ? 'scale-105 opacity-100 animate-pulse' : 'scale-100 opacity-100'
+                      }`}
+                    >
+                      <span 
+                        className={`px-2 py-1 rounded-full text-xs font-medium text-white ${getBadgeColor()} transition-all hover:shadow-md ${
+                          newFlag === flag ? 'shadow-md' : ''
+                        }`}
+                      >
+                        {flag}
+                        <button
+                          type="button"
+                          className="ml-1 text-white focus:outline-none hover:text-gray-200 inline-flex"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeFlag(flag, false);
+                          }}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

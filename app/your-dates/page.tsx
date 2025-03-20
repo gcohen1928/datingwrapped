@@ -2,16 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import DataTable from '../components/data-table';
-import AuthDebug from '../components/auth-debug';
-import { FaInfoCircle } from 'react-icons/fa';
 import { useAuth } from '../providers/auth-provider';
 import { useRouter } from 'next/navigation';
+import { FaHeart, FaCalendarAlt, FaChartLine } from 'react-icons/fa';
 
 export default function YourDates() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
-  const [showDebug, setShowDebug] = useState(false); // Set to false by default
 
   useEffect(() => {
     setIsClient(true);
@@ -36,7 +34,7 @@ export default function YourDates() {
     );
   }
 
-  // If not authenticated after loading, show a message and debug info
+  // If not authenticated after loading, show a message
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -48,40 +46,55 @@ export default function YourDates() {
         >
           Go to Login
         </button>
-        
-        <div className="w-full max-w-3xl">
-          <h2 className="text-xl font-bold mb-4">Debug Information</h2>
-          <AuthDebug />
-        </div>
       </div>
     );
   }
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Your Dating Log</h1>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
-          Browse through your dating experiences with our interactive interface. Your data will automatically sync to your account.
-        </p>
-      </div>
-      
-      {process.env.NODE_ENV === 'development' && (
-        <>
-          <button
-            onClick={() => setShowDebug(!showDebug)}
-            className="mb-4 px-4 py-2 bg-gray-200 text-gray-700 rounded-md"
-          >
-            {showDebug ? 'Hide Debug Info' : 'Show Debug Info'}
-          </button>
+      <div className="mb-8 bg-gradient-to-r from-brand-lavender-500/10 to-brand-pink-500/10 rounded-xl p-6 shadow-sm">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-brand-lavender-600 to-brand-pink-600">
+            Your Dating Journey
+          </h1>
           
-          {showDebug && (
-            <div className="mb-8">
-              <AuthDebug />
+          <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-2xl">
+            Track, analyze, and reflect on your dating experiences. Your personal dating log helps you understand patterns and grow from each relationship.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center">
+              <div className="rounded-full bg-brand-lavender-100 p-2 mr-3">
+                <FaHeart className="text-brand-lavender-500" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900">Track Matches</h3>
+                <p className="text-sm text-gray-500">Log each person you date</p>
+              </div>
             </div>
-          )}
-        </>
-      )}
+            
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center">
+              <div className="rounded-full bg-brand-pink-100 p-2 mr-3">
+                <FaCalendarAlt className="text-brand-pink-500" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900">Date History</h3>
+                <p className="text-sm text-gray-500">Record outcomes and experiences</p>
+              </div>
+            </div>
+            
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center">
+              <div className="rounded-full bg-blue-100 p-2 mr-3">
+                <FaChartLine className="text-blue-500" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900">Identify Patterns</h3>
+                <p className="text-sm text-gray-500">See your dating trends over time</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <DataTable />
     </div>
