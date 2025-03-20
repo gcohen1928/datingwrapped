@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { FaEnvelope, FaLock } from 'react-icons/fa';
 import { supabase } from '../../utils/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -10,7 +10,8 @@ import Logo from '../../components/logo';
 import Image from 'next/image';
 import LoadingSpinner from '../../components/loading-spinner';
 
-export default function Login() {
+// Component to handle URL parameters
+function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -239,5 +240,20 @@ export default function Login() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Wrap the component that uses useSearchParams in Suspense
+export default function Login() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-brand-pink-100 via-white to-brand-mint-100">
+        <div className="flex flex-col items-center justify-center">
+          <LoadingSpinner size="lg" color="#9370DB" />
+        </div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 } 
