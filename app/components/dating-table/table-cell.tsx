@@ -193,26 +193,56 @@ export function NumberCell({
     
     // Update the parent component
     const val = localValue ? parseFloat(localValue.toString()) : undefined;
-    onUpdate(rowIndex, id, val);
+    
+    // For currency fields, limit to 2 decimal places
+    const formattedVal = id === 'total_cost' && val ? parseFloat(val.toFixed(2)) : val;
+    
+    onUpdate(rowIndex, id, formattedVal);
     
     // Reset the flag after a small delay to allow the update to propagate
     setTimeout(() => {
       isUpdatingRef.current = false;
     }, 50);
   };
+
+  // Determine if this is a currency field
+  const isCurrency = id === 'total_cost';
+  
+  // Set appropriate step value for currency
+  const actualStep = isCurrency ? "0.01" : step;
+  
+  // Handle change and enforce 2 decimal places for currency
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    if (isCurrency && value) {
+      // Only allow 2 decimal places for currency fields
+      const regex = /^\d*\.?\d{0,2}$/;
+      if (regex.test(value)) {
+        setLocalValue(value);
+      }
+    } else {
+      setLocalValue(value);
+    }
+  };
   
   return (
-    <input
-      type="number"
-      value={localValue}
-      onChange={e => setLocalValue(e.target.value)}
-      onBlur={handleBlur}
-      className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none"
-      min={min}
-      max={max}
-      step={step}
-      placeholder={placeholder || formatFieldName(id)}
-    />
+    <div className={`w-full flex items-center ${isCurrency ? 'relative' : ''}`}>
+      {isCurrency && (
+        <span className="absolute left-0 pl-1 text-gray-500">$</span>
+      )}
+      <input
+        type="number"
+        value={localValue}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        className={`w-full bg-transparent border-0 focus:ring-0 focus:outline-none ${isCurrency ? 'pl-5' : ''}`}
+        min={min}
+        max={max}
+        step={actualStep}
+        placeholder={placeholder || formatFieldName(id)}
+      />
+    </div>
   );
 }
 
@@ -666,42 +696,6 @@ export function FlagsCell({
                 )}
               </div>
             </div>
-            
-            {/* Current flags */}
-            {flags.length > 0 && (
-              <div className="mt-2 pt-2">
-                <div className="text-xs text-gray-500 mb-1 px-2">Current {formatFieldName(id)}:</div>
-                <div className="flex flex-wrap gap-1 px-2 pb-1">
-                  {flags.map((flag, index) => (
-                    <div 
-                      key={index} 
-                      className={`flex items-center transition-all duration-300 ${
-                        flagToRemove === flag ? 'scale-0 opacity-0' : 
-                        newFlag === flag ? 'scale-105 opacity-100 animate-pulse' : 'scale-100 opacity-100'
-                      }`}
-                    >
-                      <span 
-                        className={`px-2 py-1 rounded-full text-xs font-medium text-white ${getBadgeColor()} transition-all hover:shadow-md ${
-                          newFlag === flag ? 'shadow-md' : ''
-                        }`}
-                      >
-                        {flag}
-                        <button
-                          type="button"
-                          className="ml-1 text-white focus:outline-none hover:text-gray-200 inline-flex"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeFlag(flag, false);
-                          }}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -715,6 +709,45 @@ export function FlagHeader({ color, label }: { color: string; label: string }) {
     <div className="flex items-center">
       <FaFlag className={`${color} mr-1`} />
       <span className="font-medium">{label}</span>
+    </div>
+  );
+}
+
+// Number Rating cell for 1-10 scale
+export function NumberRatingCell({ 
+  row, 
+  rowIndex, 
+  id, 
+  value, 
+  onUpdate,
+  colorClass = "text-brand-pink-500"
+}: BaseCellProps & { colorClass?: string }) {
+  const rating = value || 0;
+  const [hoverRating, setHoverRating] = useState(0);
+  
+  return (
+    <div className="flex items-center space-x-1.5">
+      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+        <button
+          key={num}
+          type="button"
+          onClick={() => onUpdate(rowIndex, id, num)}
+          onMouseEnter={() => setHoverRating(num)}
+          onMouseLeave={() => setHoverRating(0)}
+          className={`
+            w-5 h-5 flex items-center justify-center rounded-full text-xs font-medium
+            focus:outline-none transition-all
+            ${num <= (hoverRating || rating) 
+              ? `${colorClass} bg-pink-50 border border-pink-200 hover:scale-110` 
+              : 'text-gray-400 bg-gray-50 border border-gray-200 hover:bg-gray-100'}
+            ${hoverRating > 0 && num <= hoverRating ? 'animate-pulse' : ''}
+            sm:w-5 sm:h-5 xs:w-4 xs:h-4 xs:text-[10px]
+          `}
+          aria-label={`Rate ${num} out of 10`}
+        >
+          {num}
+        </button>
+      ))}
     </div>
   );
 }

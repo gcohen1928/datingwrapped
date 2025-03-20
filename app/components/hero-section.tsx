@@ -60,7 +60,7 @@ export default function HeroSection() {
             ) : (
               <Link
                 href="/your-dates"
-                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-brand-lavender-600 hover:bg-brand-lavender-700 md:py-4 md:text-lg md:px-8 shadow-lg hover:shadow-xl transition-all duration-300"
+                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-brand-lavender-400 hover:bg-brand-lavender-300 md:py-4 md:text-lg md:px-8 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 View Your Dates
               </Link>

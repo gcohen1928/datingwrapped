@@ -124,7 +124,7 @@ export function createNewEntry(userId: string, entryCount: number): NewDatingEnt
     outcome: 'Ongoing',
     notes: '',
     age: undefined,
-    hotness: undefined,
+    hotness: 0,
     occupation: '',
     relationship_status: 'Single',
     status: 'Active',

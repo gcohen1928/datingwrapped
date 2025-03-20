@@ -99,7 +99,7 @@ export default function FloatingElements() {
         x: Math.random() * 100,
         y: Math.random() * 100,
         duration: 15 + Math.random() * 20,
-        delay: Math.random() * 5,
+        delay: Math.random() * .5,
         rotate: Math.random() * 360,
       })
     }
@@ -114,7 +114,7 @@ export default function FloatingElements() {
         x: Math.random() * 100,
         y: Math.random() * 100,
         duration: 15 + Math.random() * 20,
-        delay: Math.random() * 5,
+        delay: Math.random() * 0.5,
         rotate: Math.random() * 360,
       })
     }
@@ -132,13 +132,13 @@ export default function FloatingElements() {
             x: `${element.x}vw`,
             y: `${element.y}vh`,
             rotate: element.rotate,
-            opacity: 0,
+            opacity: element.type === "star" ? 0.3 : 0,
           }}
           animate={{
             x: [`${element.x}vw`, `${(element.x + 20) % 100}vw`, `${(element.x + 10) % 100}vw`, `${element.x}vw`],
             y: [`${element.y}vh`, `${(element.y + 15) % 100}vh`, `${(element.y - 10) % 100}vh`, `${element.y}vh`],
             rotate: [element.rotate, element.rotate + 180, element.rotate + 360],
-            opacity: [0, 0.7, 0.5, 0],
+            opacity: element.type === "star" ? [0.3, 0.7, 0.5, 0.3] : [0, 0.7, 0.5, 0],
           }}
           transition={{
             duration: element.duration,

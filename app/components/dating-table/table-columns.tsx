@@ -8,6 +8,7 @@ import {
   NumberCell,
   SelectCell,
   StarRatingCell,
+  NumberRatingCell,
   TextareaCell,
   FlagsCell,
   FlagHeader,
@@ -124,7 +125,7 @@ export function useTableColumns(
       ),
     }),
     columnHelper.accessor('platform', {
-      header: 'Platform',
+      header: 'How you met',
       size: defaultColumnSizes.platform,
       minSize: 100,
       maxSize: 250,
@@ -187,12 +188,12 @@ export function useTableColumns(
       ),
     }),
     columnHelper.accessor('hotness', {
-      header: 'Hotness',
+      header: 'Hotness (1-10)',
       size: defaultColumnSizes.hotness,
       minSize: 80,
       maxSize: 200,
       cell: ({ row, getValue, column: { id } }) => (
-        <StarRatingCell
+        <NumberRatingCell
           row={row.original}
           rowIndex={row.index}
           id={id}

@@ -16,6 +16,7 @@ import { Tables } from '../../utils/supabase';
 import { useTableColumns } from './table-columns';
 import { fetchUserEntries, saveEntry, deleteEntry, createNewEntry } from './data-service';
 import ContextMenu from './context-menu';
+import LoadingSpinner from '../../components/loading-spinner';
 
 type DatingEntry = Tables['dating_entries']['Row'];
 type NewDatingEntry = Tables['dating_entries']['Insert'];
@@ -47,7 +48,33 @@ export default function DatingTable({ searchFilter = '' }: DatingTableProps) {
         setLoading(true);
         const { userId, entries } = await fetchUserEntries();
         setUserId(userId);
-        setData(entries);
+        
+        // Migrate existing hotness ratings from 1-5 scale to 1-10 scale
+        const migratedEntries = entries.map(entry => {
+          // Only convert if it's a number between 1-5
+          if (entry.hotness !== null && entry.hotness !== undefined && entry.hotness >= 1 && entry.hotness <= 5) {
+            // Convert from 5-star to 10-point scale (multiply by 2)
+            return { 
+              ...entry, 
+              hotness: entry.hotness * 2
+            };
+          }
+          return entry;
+        });
+        
+        setData(migratedEntries);
+        
+        // Save migrated entries to the database
+        const entriesToUpdate = migratedEntries.filter((entry, index) => 
+          entry.hotness !== entries[index].hotness && 'id' in entry
+        );
+        
+        // Update migrated entries in the database
+        if (entriesToUpdate.length > 0 && userId) {
+          await Promise.all(
+            entriesToUpdate.map(entry => saveEntry(userId, entry))
+          );
+        }
       } catch (error: any) {
         setError(error.message);
       } finally {
@@ -269,10 +296,7 @@ export default function DatingTable({ searchFilter = '' }: DatingTableProps) {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="h-8 w-64 bg-gray-200 rounded mb-4"></div>
-          <div className="h-64 w-full max-w-4xl bg-gray-100 rounded"></div>
-        </div>
+        <LoadingSpinner size="lg" color="#9370DB" />
       </div>
     );
   }

@@ -3,18 +3,17 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../utils/supabase';
+import LoadingSpinner from '../../components/loading-spinner';
 
 export default function AuthCallback() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string>('Completing authentication...');
 
   useEffect(() => {
     // Handle the OAuth callback
     const handleAuthCallback = async () => {
       try {
         console.log('Auth callback initiated');
-        setMessage('Processing authentication...');
         
         // Get the auth code from the URL
         const hash = window.location.hash;
@@ -47,7 +46,6 @@ export default function AuthCallback() {
         
         // Redirect to your-dates on successful authentication
         console.log('Authentication successful, redirecting to your dates');
-        setMessage('Authentication successful! Redirecting...');
         
         // Short delay to ensure session is properly set
         setTimeout(() => {
@@ -56,7 +54,6 @@ export default function AuthCallback() {
       } catch (error: any) {
         console.error('Error during auth callback:', error);
         setError(error.message || 'Authentication failed');
-        setMessage('Authentication failed. Redirecting to login...');
         
         // Short delay before redirecting
         setTimeout(() => {
@@ -71,13 +68,13 @@ export default function AuthCallback() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-brand-pink-100 via-white to-brand-mint-100">
       <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4">{message}</h1>
         {error ? (
-          <div className="text-red-500 mb-4">{error}</div>
+          <div className="text-red-500 mb-4 text-sm">{error}</div>
         ) : (
-          <div className="w-16 h-16 border-t-4 border-brand-lavender-500 border-solid rounded-full animate-spin mx-auto"></div>
+          <div className="flex flex-col items-center justify-center gap-6">
+            <LoadingSpinner size="lg" color="#9370DB" />
+          </div>
         )}
-        <p className="mt-4 text-gray-600">Please wait while we log you in.</p>
       </div>
     </div>
   );

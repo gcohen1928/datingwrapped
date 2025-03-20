@@ -5,6 +5,7 @@ import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import { Tables } from '../../utils/supabase';
 import { fetchUserEntries, saveEntry, deleteEntry, createNewEntry } from '../dating-table/data-service';
 import SimpleCard from './simple-card';
+import LoadingSpinner from '../../components/loading-spinner';
 
 type DatingEntry = Tables['dating_entries']['Row'];
 type NewDatingEntry = Tables['dating_entries']['Insert'];
@@ -99,10 +100,7 @@ export default function DatingCards() {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="h-8 w-64 bg-gray-200 rounded mb-4"></div>
-          <div className="h-64 w-full max-w-4xl bg-gray-100 rounded"></div>
-        </div>
+        <LoadingSpinner size="lg" color="#9370DB" />
       </div>
     );
   }

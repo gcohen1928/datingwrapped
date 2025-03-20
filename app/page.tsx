@@ -6,6 +6,7 @@ import { useAuth } from "./providers/auth-provider";
 import { useEffect, useState } from "react";
 import NavBar from "./components/nav-bar";
 import HeroSection from "./components/hero-section";
+import LoadingSpinner from "./components/loading-spinner";
 
 export default function Home() {
   const { user, isLoading } = useAuth();
@@ -31,7 +32,7 @@ export default function Home() {
     return (
       <div className="min-h-screen flex flex-col">
         <div className="flex items-center justify-center min-h-screen">
-          <div className="w-16 h-16 border-t-4 border-purple-500 border-solid rounded-full animate-spin"></div>
+          <LoadingSpinner size="lg" color="#9370DB" />
         </div>
       </div>
     );

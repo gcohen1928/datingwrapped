@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FaChartBar, FaFilm, FaCog, FaSignOutAlt, FaSpinner, FaHeart } from 'react-icons/fa';
+import { FaChartBar, FaFilm, FaCog, FaSignOutAlt, FaHeart } from 'react-icons/fa';
 import { useAuth } from '../providers/auth-provider';
 import { useEffect, useState } from 'react';
 import Logo from './logo';
+import LoadingSpinner from './loading-spinner';
 
 export default function NavBar() {
   const pathname = usePathname();
@@ -28,9 +29,11 @@ export default function NavBar() {
       <nav className={navbarStyle}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
+            <div className="flex-shrink-0 flex items-center">
+              <Logo href="/" />
+            </div>
             <div className="flex items-center">
-              <FaSpinner className="animate-spin h-5 w-5 text-brand-lavender-500" />
-              <span className="ml-2 text-gray-600">Loading...</span>
+              <LoadingSpinner size="sm" color="#9370DB" />
             </div>
           </div>
         </div>
@@ -44,7 +47,7 @@ export default function NavBar() {
   }
 
   const navItems = [
-    { href: '/dashboard', label: 'Data Entry', icon: <FaHeart className="mr-2" /> },
+    { href: '/your-dates', label: 'Data Entry', icon: <FaHeart className="mr-2" /> },
     { href: '/stats', label: 'Stats', icon: <FaChartBar className="mr-2" /> },
     { href: '/wrapped', label: 'Wrapped', icon: <FaFilm className="mr-2" /> },
     { href: '/settings', label: 'Settings', icon: <FaCog className="mr-2" /> },
@@ -85,7 +88,7 @@ export default function NavBar() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Logo href="/dashboard" />
+              <Logo href="/" />
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               {navItems.map((item) => (
