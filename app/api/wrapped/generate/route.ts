@@ -18,7 +18,6 @@ Return the response as a JSON object with a 'slides' array, where each slide con
   "id": string (matching the template ID),
   "title": string (matching the template title),
   "description": string (matching the template description),
-  "type": string (matching the template type),
   "data": object (containing relevant statistics and information for this slide)
 }`
 

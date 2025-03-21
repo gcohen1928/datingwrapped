@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Loader2 } from 'lucide-react'
+import { Loader2, X } from 'lucide-react'
 import { defaultSlides, SlideTemplate, TAG_COLORS, TagColor } from './default-slides'
 import { useRouter } from 'next/navigation'
 import { CustomSlideForm } from '@/components/custom-slide-form'
@@ -37,7 +37,6 @@ interface GenerateSlidesProps {
 interface CustomSlide {
   title: string
   description: string
-  type: 'stat' | 'insight' | 'fun_fact'
 }
 
 export default function GenerateSlides({ dateEntries }: GenerateSlidesProps) {
@@ -46,6 +45,7 @@ export default function GenerateSlides({ dateEntries }: GenerateSlidesProps) {
   const [error, setError] = useState<string | null>(null)
   const [selectedTag, setSelectedTag] = useState<TagColor | null>(null)
   const [showCustomSlideForm, setShowCustomSlideForm] = useState(false)
+  const [hoveredSlideId, setHoveredSlideId] = useState<string | null>(null)
   const [customSlides, setCustomSlides] = useState<SlideTemplate[]>(() => {
     if (typeof window === 'undefined') return []
     const stored = localStorage.getItem('customSlides')
@@ -58,15 +58,15 @@ export default function GenerateSlides({ dateEntries }: GenerateSlidesProps) {
   })
   
   // Get selected templates
-  const selectedTemplates = [...defaultSlides, ...customSlides].filter(slide => selectedTemplateIds.includes(slide.id))
+  const selectedTemplates = [...customSlides, ...defaultSlides].filter(slide => selectedTemplateIds.includes(slide.id))
   
   // Get all unique tags
   const allTags = Object.keys(TAG_COLORS) as TagColor[]
   
   // Filter slides by selected tag
   const filteredSlides = selectedTag 
-    ? [...defaultSlides, ...customSlides].filter(slide => slide.tags?.includes(selectedTag))
-    : [...defaultSlides, ...customSlides]
+    ? [...customSlides, ...defaultSlides].filter(slide => slide.tags?.includes(selectedTag))
+    : [...customSlides, ...defaultSlides]
 
   // Get generated slides from localStorage
   const [generatedSlides, setGeneratedSlides] = useState<GeneratedSlide[]>(() => {
@@ -169,11 +169,16 @@ export default function GenerateSlides({ dateEntries }: GenerateSlidesProps) {
       tags: ['custom']
     }
     
-    setCustomSlides(prev => [...prev, customSlideTemplate])
+    setCustomSlides(prev => [customSlideTemplate, ...prev])
     setSelectedTemplateIds(prev => 
-      prev.length < 10 ? [...prev, customSlideTemplate.id] : prev
+      prev.length < 10 ? [customSlideTemplate.id, ...prev] : prev
     )
     setShowCustomSlideForm(false)
+  }
+
+  const handleDeleteCustomSlide = (slideId: string) => {
+    setCustomSlides(prev => prev.filter(slide => slide.id !== slideId))
+    setSelectedTemplateIds(prev => prev.filter(id => id !== slideId))
   }
 
   if (generatedSlides.length > 0) {
@@ -198,15 +203,6 @@ export default function GenerateSlides({ dateEntries }: GenerateSlidesProps) {
                       <span className="font-medium">{key}:</span> {String(value)}
                     </p>
                   ))}
-                </div>
-                <div className="mt-2">
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    slide.type === 'stat' ? 'bg-green-100 text-green-800' :
-                    slide.type === 'insight' ? 'bg-blue-100 text-blue-800' :
-                    'bg-purple-100 text-purple-800'
-                  }`}>
-                    {slide.type}
-                  </span>
                 </div>
               </motion.div>
             ))}
@@ -263,18 +259,11 @@ export default function GenerateSlides({ dateEntries }: GenerateSlidesProps) {
       </div>
 
       {/* Slides Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Custom Slide Form */}
-        <CustomSlideForm
-          showForm={showCustomSlideForm}
-          onSubmit={handleCustomSlideSubmit}
-          onCancel={() => setShowCustomSlideForm(false)}
-        />
-        
-        <AnimatePresence>
-          {filteredSlides.map((slide, index) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 relative">
+        <AnimatePresence mode="popLayout">
+          {/* Custom Slide Form */}
+          {showCustomSlideForm && (
             <motion.div
-              key={slide.id}
               layout
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -282,34 +271,78 @@ export default function GenerateSlides({ dateEntries }: GenerateSlidesProps) {
               transition={{ 
                 type: "spring",
                 damping: 25,
-                stiffness: 200,
-                delay: index * 0.05
+                stiffness: 200
               }}
-              className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                selectedTemplateIds.includes(slide.id)
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-blue-300'
-              }`}
-              onClick={() => toggleSlideSelection(slide)}
             >
-              <h3 className="font-semibold mb-2">{slide.title}</h3>
-              <p className="text-sm text-gray-600 mb-3">{slide.description}</p>
-              <div className="flex flex-wrap gap-2">
-                <span className={`text-xs px-2 py-1 rounded ${
-                  slide.type === 'stat' ? 'bg-green-100 text-green-800' :
-                  slide.type === 'insight' ? 'bg-blue-100 text-blue-800' :
-                  'bg-purple-100 text-purple-800'
-                }`}>
-                  {slide.type}
-                </span>
-                {slide.tags?.map(tag => (
-                  <span key={tag} className={`text-xs px-2 py-1 rounded ${TAG_COLORS[tag as TagColor] || TAG_COLORS.custom}`}>
-                    {tag.charAt(0).toUpperCase() + tag.slice(1)}
-                  </span>
-                ))}
-              </div>
+              <CustomSlideForm
+                showForm={showCustomSlideForm}
+                onSubmit={handleCustomSlideSubmit}
+                onCancel={() => setShowCustomSlideForm(false)}
+              />
             </motion.div>
-          ))}
+          )}
+          
+          {filteredSlides.map((slide) => {
+            const isCustomSlide = slide.id.startsWith('custom-')
+            const isHovered = hoveredSlideId === slide.id
+
+            return (
+              <motion.div
+                key={slide.id}
+                layout
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ 
+                  layout: {
+                    type: "spring",
+                    damping: 25,
+                    stiffness: 200
+                  },
+                  opacity: { duration: 0.2 }
+                }}
+                className={`p-4 border rounded-lg cursor-pointer transition-colors relative ${
+                  selectedTemplateIds.includes(slide.id)
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-blue-300'
+                }`}
+                onClick={() => toggleSlideSelection(slide)}
+                onMouseEnter={() => setHoveredSlideId(slide.id)}
+                onMouseLeave={() => setHoveredSlideId(null)}
+              >
+                {isCustomSlide && (
+                  <AnimatePresence>
+                    {isHovered && (
+                      <motion.button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteCustomSlide(slide.id)
+                        }}
+                        className="absolute -top-2 -right-2 p-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-10"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <X className="h-4 w-4 text-gray-600" />
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                )}
+                <h3 className="font-semibold mb-2">{slide.title}</h3>
+                <p className="text-sm text-gray-600 mb-3">{slide.description}</p>
+                <div className="flex flex-wrap gap-2">
+                  {slide.tags?.map(tag => (
+                    <span key={tag} className={`text-xs px-2 py-1 rounded ${TAG_COLORS[tag as TagColor] || TAG_COLORS.custom}`}>
+                      {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            )
+          })}
         </AnimatePresence>
       </div>
 
